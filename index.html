@@ -265,6 +265,33 @@ select.synth-select:focus{border-color:var(--amber);}
 ::-webkit-scrollbar-track{background:var(--surface);}
 ::-webkit-scrollbar-thumb{background:var(--border2);}
 body{padding-top:max(18px,env(safe-area-inset-top));padding-bottom:max(30px,env(safe-area-inset-bottom));padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));}
+/* ── MOBILE 9:16 ── */
+@media (max-width:760px){
+  body{padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 0 max(10px,env(safe-area-inset-left));overscroll-behavior-y:contain;touch-action:manipulation;}
+  header{margin-bottom:10px;padding-bottom:8px;}
+  .logo{font-size:1.9rem;}
+  .logo span{font-size:.55rem;letter-spacing:.3em;}
+  #midiGlobal{display:none;}
+  header{gap:6px;}
+  .logo{min-width:0;font-size:1.6rem;}
+  .logo span{letter-spacing:.18em;white-space:nowrap;}
+  .header-right{gap:4px;flex-shrink:0;}
+  #recPanel{gap:4px!important;}
+  header .pill{padding:5px 8px;font-size:.58rem;}
+  #recTimer{min-width:0!important;}
+  .grid{grid-template-columns:1fr;grid-template-rows:none;gap:8px;}
+  .grid>.panel{grid-column:1!important;grid-row:auto!important;padding:10px;}
+  .sample-panel{order:1;} .vis-panel{order:2;} .grain-panel{order:3;} .env-panel{order:4;} .fx-panel{order:5;}
+  .midi-panel{display:none;}
+  canvas#grainVis{flex:none;height:150px;min-height:0;}
+  .knob-grid{gap:4px;}
+  .kb-panel{order:9;position:sticky;bottom:0;z-index:30;padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:#0e0c09;border-top:1px solid var(--border2);margin:0 -10px;grid-column:1!important;}
+  .kb-panel .ptitle{display:none;}
+  .kb-wrap{height:100px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .k-black{height:60px;}
+  .k-label{font-size:.5rem;}
+  .grid{padding-bottom:6px;}
+}
 </style>
 </head>
 <body>
@@ -1114,7 +1141,10 @@ const pcKeys = {
 
 function buildKeyboard() {
   const wrap = document.getElementById('kbWrap');
-  const whites = noteLayout.filter(n => !n.black);
+  const narrow = window.matchMedia('(max-width:760px)').matches;
+  const lo = narrow ? 48 : 0, hi = narrow ? 71 : 999;
+  const layout = noteLayout.filter(n => n.midi >= lo && n.midi <= hi);
+  const whites = layout.filter(n => !n.black);
   const kw = 100 / whites.length;
 
   whites.forEach((n, i) => {
@@ -1132,14 +1162,14 @@ function buildKeyboard() {
     wrap.appendChild(k);
   });
 
-  noteLayout.filter(n => n.black).forEach(n => {
+  layout.filter(n => n.black).forEach(n => {
     const wIdx = whites.findIndex(w => w.midi === n.midi - 1);
     if (wIdx < 0) return;
     const k = document.createElement('div');
     k.className = 'k-black';
     k.dataset.midi = n.midi;
-    k.style.left = `calc(${(wIdx + 1) * kw}% - 9px)`;
-    k.style.width = '18px';
+    k.style.left = `${(wIdx + 1) * kw - kw * 0.31}%`;
+    k.style.width = `${kw * 0.62}%`;
     k.addEventListener('mousedown', e => { e.stopPropagation(); noteOn(n.midi); });
     k.addEventListener('mouseup', () => noteOff(n.midi));
     k.addEventListener('mouseleave', () => noteOff(n.midi));
