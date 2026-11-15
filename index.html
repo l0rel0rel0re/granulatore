@@ -7,7 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Granular">
 <title>GRANULAR — Sintesi Granulare</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&display=swap');
@@ -261,6 +264,7 @@ select.synth-select:focus{border-color:var(--amber);}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:var(--surface);}
 ::-webkit-scrollbar-thumb{background:var(--border2);}
+body{padding-top:max(18px,env(safe-area-inset-top));padding-bottom:max(30px,env(safe-area-inset-bottom));padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));}
 </style>
 </head>
 <body>
@@ -1445,7 +1449,16 @@ function downloadRecording() {
   triggerDownload(lastBlobURL, `granular_${timestamp()}.wav`);
 }
 
-function triggerDownload(url, filename) {
+async function triggerDownload(url, filename) {
+  // iOS/Safari: il download diretto e' inaffidabile, usiamo il foglio di condivisione (Salva su File)
+  try {
+    const blob = await (await fetch(url)).blob();
+    const file = new File([blob], filename, { type: blob.type || 'audio/wav' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a');
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
